@@ -437,17 +437,18 @@
     (() => {
   "use strict";
 
-  const CONFIG = {
+    const CONFIG = {
     eventMinMs: 2000,
     eventMaxMs: 10000,
     gapMinMs: 2000,
-    gapMaxMs: 180000
+    gapMaxMs: 15000
   };
 
   const eventFiles = {
     nazad: "nazad.mp3",
     stop: "stop.mp3",
-    gaz: "gaz.mp3"
+    gaz: "gaz.mp3",
+    bonus: "bonus.mp3"  // Добавляем бонусный звук
   };
 
   const finishFile = "alga.mp3";
@@ -550,8 +551,17 @@
   const startRandomEvent = () => {
     if (!running) return;
 
-    const names = Object.keys(eventFiles);
-    const name = names[randomInt(0, names.length - 1)];
+    // Проверяем шанс 1 к 100 на бонусное событие
+    const isBonus = Math.random() < 0.01; // 1%
+
+    let name;
+    if (isBonus) {
+      name = "bonus";
+    } else {
+      const names = Object.keys(eventFiles).filter(key => key !== "bonus");
+      name = names[randomInt(0, names.length - 1)];
+    }
+
     const duration = randomInt(CONFIG.eventMinMs, CONFIG.eventMaxMs);
 
     currentEvent = name;
