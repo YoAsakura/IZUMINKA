@@ -263,6 +263,7 @@
       padding: 20px 24px;
       margin-top: 10px;
       backdrop-filter: blur(4px);
+      width: 100%;
     }
 
     .stats-title {
@@ -275,22 +276,23 @@
 
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
       gap: 12px;
     }
 
     .stat-item {
       text-align: center;
-      padding: 8px 4px;
+      padding: 10px 6px;
       border-radius: 8px;
-      background: rgba(168,85,247,.08);
+      background: rgba(168,85,247,.06);
       border: 1px solid rgba(168,85,247,.08);
       transition: .3s ease;
     }
 
     .stat-item.active-stat {
-      border-color: rgba(168,85,247,.3);
-      background: rgba(168,85,247,.15);
+      border-color: rgba(168,85,247,.4);
+      background: rgba(168,85,247,.18);
+      box-shadow: 0 0 30px rgba(168,85,247,.1);
     }
 
     .stat-item .label {
@@ -299,19 +301,68 @@
       letter-spacing: .12em;
       text-transform: uppercase;
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .stat-item .count {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
       color: #d8b4fe;
-      text-shadow: 0 0 20px rgba(168,85,247,.3);
+      text-shadow: 0 0 20px rgba(168,85,247,.2);
+      display: block;
+    }
+
+    .stat-item .time {
+      font-size: 10px;
+      color: #8d809c;
+      display: block;
+      margin-top: 2px;
+      font-weight: 400;
+      letter-spacing: .05em;
     }
 
     .stat-item .count.bonus-count {
       color: #fbbf24;
       text-shadow: 0 0 20px rgba(251,191,36,.3);
+    }
+
+    .stat-item .time.bonus-time {
+      color: #fbbf24;
+    }
+
+    /* Общая статистика */
+    .total-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(168,85,247,.12);
+    }
+
+    .total-stat-item {
+      text-align: center;
+    }
+
+    .total-stat-item .label {
+      font-size: 8px;
+      color: #8d809c;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .total-stat-item .value {
+      font-size: 16px;
+      font-weight: 700;
+      color: #d8b4fe;
+      text-shadow: 0 0 20px rgba(168,85,247,.2);
+    }
+
+    .total-stat-item .value.total-time-value {
+      color: #c084fc;
+      font-size: 14px;
     }
 
     /* ===== ИВЕНТЫ ПРЯМО ПОД КНОПКОЙ ===== */
@@ -448,6 +499,11 @@
       .stats-grid {
         grid-template-columns: repeat(2, 1fr);
       }
+
+      .total-stats {
+        flex-direction: column;
+        gap: 12px;
+      }
     }
 
     .main-control .events-wrapper {
@@ -503,18 +559,34 @@
             <div class="stat-item" data-stat="nazad">
               <span class="label">NAZAD</span>
               <span class="count" id="count-nazad">0</span>
+              <span class="time" id="time-nazad">00:00:00</span>
             </div>
             <div class="stat-item" data-stat="stop">
               <span class="label">STOP</span>
               <span class="count" id="count-stop">0</span>
+              <span class="time" id="time-stop">00:00:00</span>
             </div>
             <div class="stat-item" data-stat="gaz">
               <span class="label">GAZ</span>
               <span class="count" id="count-gaz">0</span>
+              <span class="time" id="time-gaz">00:00:00</span>
             </div>
             <div class="stat-item" data-stat="bonus">
               <span class="label">BONUS</span>
               <span class="count bonus-count" id="count-bonus">0</span>
+              <span class="time bonus-time" id="time-bonus">00:00:00</span>
+            </div>
+          </div>
+
+          <!-- ОБЩАЯ СТАТИСТИКА -->
+          <div class="total-stats">
+            <div class="total-stat-item">
+              <span class="label">ВСЕГО ИВЕНТОВ</span>
+              <span class="value" id="totalEventsCount">0</span>
+            </div>
+            <div class="total-stat-item">
+              <span class="label">ОБЩЕЕ ВРЕМЯ</span>
+              <span class="value total-time-value" id="totalTimeAll">00:00:00</span>
             </div>
           </div>
         </div>
@@ -538,10 +610,10 @@
     (() => {
   "use strict";
 
-    const CONFIG = {
-    eventMinMs: 2000,
+  const CONFIG = {
+    eventMinMs: 4000,
     eventMaxMs: 14000,
-    gapMinMs: 4000,
+    gapMinMs: 2000,
     gapMaxMs: 90000
   };
 
@@ -565,18 +637,14 @@
 
   // Статистика
   const stats = {
-    nazad: 0,
-    stop: 0,
-    gaz: 0,
-    bonus: 0
+    nazad: { count: 0, time: 0 },
+    stop: { count: 0, time: 0 },
+    gaz: { count: 0, time: 0 },
+    bonus: { count: 0, time: 0 }
   };
 
-  const totalEvents = {
-    nazad: 0,
-    stop: 0,
-    gaz: 0,
-    bonus: 0
-  };
+  let currentEventStartTime = 0;
+  let currentEventDuration = 0;
 
   let running = false;
   let startedAt = 0;
@@ -586,9 +654,6 @@
   let timerId = null;
   let currentAudio = null;
   let currentEvent = null;
-
-  // Флаг, чтобы не дублировать статистику
-  let isEventCompleted = false;
 
   const randomInt = (min, max) =>
     Math.floor(Math.random() * (max - min + 1)) + min;
@@ -633,20 +698,30 @@
     eventText.textContent = running
       ? "ОЖИДАНИЕ СЛЕДУЮЩЕГО ИВЕНТА"
       : "НАЖМИТЕ, ЧТОБЫ ЗАПУСТИТЬ";
-    isEventCompleted = false;
   };
 
   const updateStatsDisplay = () => {
-    document.getElementById("count-nazad").textContent = stats.nazad;
-    document.getElementById("count-stop").textContent = stats.stop;
-    document.getElementById("count-gaz").textContent = stats.gaz;
-    document.getElementById("count-bonus").textContent = stats.bonus;
+    // Обновляем счетчики и время
+    for (const [key, data] of Object.entries(stats)) {
+      document.getElementById(`count-${key}`).textContent = data.count;
+      document.getElementById(`time-${key}`).textContent = formatTime(data.time);
+    }
 
-    // Подсветка активной статистики (последний ивент)
+    // Общая статистика
+    let totalEvents = 0;
+    let totalTime = 0;
+    for (const data of Object.values(stats)) {
+      totalEvents += data.count;
+      totalTime += data.time;
+    }
+    document.getElementById("totalEventsCount").textContent = totalEvents;
+    document.getElementById("totalTimeAll").textContent = formatTime(totalTime);
+
+    // Подсветка активной статистики
     document.querySelectorAll(".stat-item").forEach(el => {
       el.classList.remove("active-stat");
     });
-    if (currentEvent && stats[currentEvent] > 0) {
+    if (currentEvent && stats[currentEvent].count > 0) {
       const activeEl = document.querySelector(`.stat-item[data-stat="${currentEvent}"]`);
       if (activeEl) activeEl.classList.add("active-stat");
     }
@@ -687,7 +762,7 @@
   const startRandomEvent = () => {
     if (!running) return;
 
-    const isBonus = Math.random() < 0.01; // 1%
+    const isBonus = Math.random() < 0.01;
 
     let name;
     if (isBonus) {
@@ -700,7 +775,9 @@
     const duration = randomInt(CONFIG.eventMinMs, CONFIG.eventMaxMs);
 
     currentEvent = name;
-    isEventCompleted = false;
+    currentEventStartTime = Date.now();
+    currentEventDuration = duration;
+
     setChip(name);
     eventBadge.textContent = name.toUpperCase();
     eventText.textContent = name.toUpperCase();
@@ -714,16 +791,16 @@
       eventBadge.textContent = "ЗАВЕРШЕНИЕ";
       eventText.textContent = "ALGA";
 
-      // ✅ Увеличиваем статистику ТОЛЬКО после alga
-      stats[name] = (stats[name] || 0) + 1;
-      totalEvents[name] = (totalEvents[name] || 0) + 1;
-      isEventCompleted = true;
+      // ✅ Увеличиваем статистику и добавляем время
+      const actualDuration = Date.now() - currentEventStartTime;
+      stats[name].count += 1;
+      stats[name].time += actualDuration;
       updateStatsDisplay();
 
       lastAlgaAt = Date.now();
       playFile(finishFile);
 
-      // Сбрасываем подсветку через небольшую задержку, чтобы пользователь видел, что ивент засчитан
+      // Сбрасываем подсветку через небольшую задержку
       setTimeout(() => {
         if (currentEvent === name) {
           document.querySelectorAll(".stat-item").forEach(el => {
