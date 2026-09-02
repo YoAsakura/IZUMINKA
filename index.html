@@ -321,6 +321,16 @@
       line-height: 1.7;
     }
 
+    .izum-img img{
+      width: 150px;
+      height: 150px;
+    }
+
+    .logo-box{
+      display: flex;
+      align-items: center;
+    }
+
     @keyframes pulse {
       0% { transform: scale(.96); opacity: .7; }
       70% { transform: scale(1.12); opacity: 0; }
@@ -373,7 +383,10 @@
 
   <main class="app">
     <header class="header">
+      <div class="logo-box">
+      <div class="izum-img"><img src="izum.png"></div>
       <div class="logo">ИЗЮМИНКА</div>
+      </div>
       <div id="status" class="status"><span></span> ГОТОВА</div>
     </header>
 
