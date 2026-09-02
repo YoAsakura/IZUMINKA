@@ -276,7 +276,7 @@
 
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
       gap: 12px;
     }
 
@@ -305,7 +305,7 @@
     }
 
     .stat-item .count {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
       color: #d8b4fe;
       text-shadow: 0 0 20px rgba(168,85,247,.2);
@@ -313,10 +313,19 @@
     }
 
     .stat-item .time {
-      font-size: 10px;
+      font-size: 9px;
       color: #8d809c;
       display: block;
-      margin-top: 2px;
+      margin-top: 1px;
+      font-weight: 400;
+      letter-spacing: .05em;
+    }
+
+    .stat-item .avg {
+      font-size: 9px;
+      color: #6d6080;
+      display: block;
+      margin-top: 1px;
       font-weight: 400;
       letter-spacing: .05em;
     }
@@ -328,6 +337,31 @@
 
     .stat-item .time.bonus-time {
       color: #fbbf24;
+    }
+
+    .stat-item .avg.bonus-avg {
+      color: #fbbf24;
+    }
+
+    /* БОНУС 2 - КРАСНЫЙ */
+    .stat-item.bonus2-stat {
+      border-color: rgba(239,68,68,.2);
+      background: rgba(239,68,68,.06);
+    }
+    .stat-item.bonus2-stat.active-stat {
+      border-color: rgba(239,68,68,.5);
+      background: rgba(239,68,68,.18);
+      box-shadow: 0 0 30px rgba(239,68,68,.15);
+    }
+    .stat-item.bonus2-stat .count {
+      color: #ef4444;
+      text-shadow: 0 0 20px rgba(239,68,68,.3);
+    }
+    .stat-item.bonus2-stat .time {
+      color: #ef4444;
+    }
+    .stat-item.bonus2-stat .avg {
+      color: #ef4444;
     }
 
     /* Общая статистика */
@@ -371,13 +405,6 @@
       text-align: center;
       border-top: 1px solid var(--line);
       margin-top: 10px;
-    }
-
-    .info-title {
-      font-size: 9px;
-      color: #8d809c;
-      letter-spacing: .2em;
-      margin-bottom: 18px;
     }
 
     .events {
@@ -439,6 +466,19 @@
     .event-chip.bonus-chip.active i {
       background: #fbbf24;
       box-shadow: 0 0 16px #fbbf24;
+    }
+
+    .event-chip.bonus2-chip {
+      border-color: rgba(239,68,68,.3);
+    }
+    .event-chip.bonus2-chip.active {
+      border-color: #ef4444;
+      background: rgba(239,68,68,.2);
+      box-shadow: 0 0 40px rgba(239,68,68,.3), 0 0 80px rgba(239,68,68,.1);
+    }
+    .event-chip.bonus2-chip.active i {
+      background: #ef4444;
+      box-shadow: 0 0 16px #ef4444;
     }
 
     .description {
@@ -549,6 +589,7 @@
             <div class="event-chip" data-event="stop"><i></i>STOP</div>
             <div class="event-chip" data-event="gaz"><i></i>GAZ</div>
             <div class="event-chip bonus-chip" data-event="bonus"><i></i>BONUS</div>
+            <div class="event-chip bonus2-chip" data-event="bonus2"><i></i>BONUS2</div>
           </div>
         </div>
 
@@ -560,21 +601,31 @@
               <span class="label">NAZAD</span>
               <span class="count" id="count-nazad">0</span>
               <span class="time" id="time-nazad">00:00:00</span>
+              <span class="avg" id="avg-nazad">AVG: --</span>
             </div>
             <div class="stat-item" data-stat="stop">
               <span class="label">STOP</span>
               <span class="count" id="count-stop">0</span>
               <span class="time" id="time-stop">00:00:00</span>
+              <span class="avg" id="avg-stop">AVG: --</span>
             </div>
             <div class="stat-item" data-stat="gaz">
               <span class="label">GAZ</span>
               <span class="count" id="count-gaz">0</span>
               <span class="time" id="time-gaz">00:00:00</span>
+              <span class="avg" id="avg-gaz">AVG: --</span>
             </div>
             <div class="stat-item" data-stat="bonus">
               <span class="label">BONUS</span>
               <span class="count bonus-count" id="count-bonus">0</span>
               <span class="time bonus-time" id="time-bonus">00:00:00</span>
+              <span class="avg bonus-avg" id="avg-bonus">AVG: --</span>
+            </div>
+            <div class="stat-item bonus2-stat" data-stat="bonus2">
+              <span class="label">BONUS2</span>
+              <span class="count" id="count-bonus2">0</span>
+              <span class="time" id="time-bonus2">00:00:00</span>
+              <span class="avg" id="avg-bonus2">AVG: --</span>
             </div>
           </div>
 
@@ -621,7 +672,8 @@
     nazad: "nazad.mp3",
     stop: "stop.mp3",
     gaz: "gaz.mp3",
-    bonus: "bonus.mp3"
+    bonus: "bonus.mp3",
+    bonus2: "bonus2.mp3"
   };
 
   const finishFile = "alga.mp3";
@@ -637,10 +689,11 @@
 
   // Статистика
   const stats = {
-    nazad: { count: 0, time: 0 },
-    stop: { count: 0, time: 0 },
-    gaz: { count: 0, time: 0 },
-    bonus: { count: 0, time: 0 }
+    nazad: { count: 0, time: 0, durations: [] },
+    stop: { count: 0, time: 0, durations: [] },
+    gaz: { count: 0, time: 0, durations: [] },
+    bonus: { count: 0, time: 0, durations: [] },
+    bonus2: { count: 0, time: 0, durations: [] }
   };
 
   let currentEventStartTime = 0;
@@ -672,6 +725,20 @@
       : `${m}:${s}`;
   };
 
+  const formatAvg = (ms) => {
+    if (ms === 0) return "AVG: --";
+    const totalSeconds = Math.floor(ms / 1000);
+    const seconds = totalSeconds % 60;
+    const minutes = Math.floor(totalSeconds / 60) % 60;
+    const hours = Math.floor(totalSeconds / 3600);
+    const s = String(seconds).padStart(2, "0");
+    const m = String(minutes).padStart(2, "0");
+    if (hours > 0) {
+      return `AVG: ${hours}:${m}:${s}`;
+    }
+    return `AVG: ${m}:${s}`;
+  };
+
   const stopAudio = () => {
     if (currentAudio) {
       currentAudio.pause();
@@ -701,10 +768,14 @@
   };
 
   const updateStatsDisplay = () => {
-    // Обновляем счетчики и время
+    // Обновляем счетчики, время и средние
     for (const [key, data] of Object.entries(stats)) {
       document.getElementById(`count-${key}`).textContent = data.count;
       document.getElementById(`time-${key}`).textContent = formatTime(data.time);
+      
+      // Среднее время
+      const avgTime = data.count > 0 ? data.time / data.count : 0;
+      document.getElementById(`avg-${key}`).textContent = formatAvg(avgTime);
     }
 
     // Общая статистика
@@ -762,17 +833,25 @@
   const startRandomEvent = () => {
     if (!running) return;
 
-    const isBonus = Math.random() < 0.01;
-
+    // Шансы: bonus2 1/100, bonus 1/500, остальное обычные
+    const random = Math.random();
     let name;
-    if (isBonus) {
+
+    if (random < 0.01) { // 1/100 для bonus2
+      name = "bonus2";
+    } else if (random < 0.012) { // 1/500 (0.002) для bonus
       name = "bonus";
     } else {
-      const names = Object.keys(eventFiles).filter(key => key !== "bonus");
+      const names = Object.keys(eventFiles).filter(key => key !== "bonus" && key !== "bonus2");
       name = names[randomInt(0, names.length - 1)];
     }
 
-    const duration = randomInt(CONFIG.eventMinMs, CONFIG.eventMaxMs);
+    let duration;
+    if (name === "bonus2") {
+      duration = 60000; // 60 секунд
+    } else {
+      duration = randomInt(CONFIG.eventMinMs, CONFIG.eventMaxMs);
+    }
 
     currentEvent = name;
     currentEventStartTime = Date.now();
@@ -791,10 +870,11 @@
       eventBadge.textContent = "ЗАВЕРШЕНИЕ";
       eventText.textContent = "ALGA";
 
-      // ✅ Увеличиваем статистику и добавляем время
+      // Увеличиваем статистику
       const actualDuration = Date.now() - currentEventStartTime;
       stats[name].count += 1;
       stats[name].time += actualDuration;
+      stats[name].durations.push(actualDuration);
       updateStatsDisplay();
 
       lastAlgaAt = Date.now();
