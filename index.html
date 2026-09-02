@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Изюминка</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --bg: #07030d;
+      --purple: #a855f7;
+      --violet: #7c3aed;
+      --pink: #d946ef;
+      --text: #f5edff;
+      --muted: #a99bb8;
+      --line: rgba(168, 85, 247, .22);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Orbitron, system-ui, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .background {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(124,58,237,.13), transparent 32%),
+        radial-gradient(circle at 15% 90%, rgba(217,70,239,.08), transparent 25%),
+        radial-gradient(circle at 90% 10%, rgba(168,85,247,.08), transparent 28%);
+    }
+
+    .grid {
+      position: absolute;
+      inset: 0;
+      opacity: .22;
+      background-image:
+        linear-gradient(rgba(168,85,247,.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(168,85,247,.12) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at center, black, transparent 75%);
+    }
+
+    .orb {
+      position: absolute;
+      width: 35vw;
+      height: 35vw;
+      min-width: 280px;
+      min-height: 280px;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: .13;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb-1 { background: var(--violet); top: -15%; left: -10%; }
+    .orb-2 { background: var(--pink); bottom: -18%; right: -10%; animation-delay: -5s; }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(1200px, 92vw);
+      min-height: 100vh;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      padding: 32px 0 28px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 20px;
+    }
+
+    .logo {
+      font-size: clamp(18px, 2vw, 25px);
+      font-weight: 800;
+      letter-spacing: .25em;
+      text-shadow: 0 0 18px rgba(168,85,247,.8);
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 10px;
+      letter-spacing: .16em;
+      color: var(--muted);
+    }
+    .status span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #777;
+      box-shadow: 0 0 0 transparent;
+    }
+    .status.running { color: #d8b4fe; }
+    .status.running span {
+      background: #c084fc;
+      box-shadow: 0 0 12px #c084fc;
+      animation: blink 1.1s infinite;
+    }
+
+    .stage {
+      flex: 1;
+      min-height: 560px;
+      display: grid;
+      grid-template-columns: 1fr minmax(300px, 440px) 1fr;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .side-stat {
+      text-align: center;
+    }
+
+    .stat-label {
+      color: #8d809c;
+      font-size: 10px;
+      letter-spacing: .18em;
+      margin-bottom: 12px;
+    }
+
+    .timer {
+      font-size: clamp(20px, 3vw, 32px);
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-shadow: 0 0 15px rgba(168,85,247,.35);
+    }
+
+    .main-control {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .event-badge {
+      min-height: 30px;
+      margin-bottom: 18px;
+      padding: 8px 18px;
+      border: 1px solid rgba(168,85,247,.25);
+      border-radius: 100px;
+      color: #a99bb8;
+      font-size: 9px;
+      letter-spacing: .2em;
+      background: rgba(20,10,32,.6);
+    }
+
+    .main-button {
+      position: relative;
+      width: min(340px, 68vw);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 1px solid rgba(216,180,254,.55);
+      cursor: pointer;
+      background:
+        radial-gradient(circle at 45% 38%, #331258 0%, #1a0a2d 42%, #0c0415 72%);
+      box-shadow:
+        0 0 0 12px rgba(124,58,237,.045),
+        0 0 55px rgba(124,58,237,.28),
+        inset 0 0 70px rgba(168,85,247,.12);
+      transition: transform .25s ease, box-shadow .35s ease;
+    }
+
+    .main-button::before {
+      content: "";
+      position: absolute;
+      inset: 12%;
+      border-radius: 50%;
+      border: 1px solid rgba(168,85,247,.18);
+    }
+
+    .main-button:hover {
+      transform: scale(1.025);
+      box-shadow:
+        0 0 0 12px rgba(124,58,237,.06),
+        0 0 85px rgba(168,85,247,.45),
+        inset 0 0 90px rgba(168,85,247,.2);
+    }
+
+    .main-button:active { transform: scale(.98); }
+
+    .main-button.active {
+      border-color: rgba(232,121,249,.8);
+      box-shadow:
+        0 0 0 12px rgba(217,70,239,.05),
+        0 0 100px rgba(217,70,239,.42),
+        inset 0 0 100px rgba(168,85,247,.2);
+    }
+
+    .play-icon {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-42%, -50%);
+      width: 0;
+      height: 0;
+      border-top: 24px solid transparent;
+      border-bottom: 24px solid transparent;
+      border-left: 38px solid #f5edff;
+      filter: drop-shadow(0 0 14px #c084fc);
+    }
+
+    .pause-icon {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 42px;
+      height: 52px;
+      border-left: 13px solid #f5edff;
+      border-right: 13px solid #f5edff;
+      filter: drop-shadow(0 0 14px #c084fc);
+    }
+
+    .pulse-ring {
+      position: absolute;
+      inset: -20px;
+      border-radius: 50%;
+      border: 1px solid rgba(168,85,247,0);
+    }
+    .main-button.active .pulse-ring {
+      border-color: rgba(168,85,247,.3);
+      animation: pulse 2.2s ease-out infinite;
+    }
+
+    .event-text {
+      min-height: 18px;
+      margin-top: 23px;
+      color: #8d809c;
+      font-size: 11px;
+      letter-spacing: .16em;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* ===== ИВЕНТЫ ПРЯМО ПОД КНОПКОЙ ===== */
+    .info {
+      padding-top: 30px;
+      text-align: center;
+      border-top: 1px solid var(--line);
+      margin-top: 10px;
+    }
+
+    .info-title {
+      font-size: 9px;
+      color: #8d809c;
+      letter-spacing: .2em;
+      margin-bottom: 18px;
+    }
+
+    .events {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .event-chip {
+      padding: 14px 28px;
+      min-width: 100px;
+      border: 2px solid rgba(168,85,247,.18);
+      border-radius: 12px;
+      background: rgba(20,10,32,.55);
+      color: #897b95;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      transition: .25s ease;
+      text-transform: uppercase;
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .event-chip i {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #59496a;
+      flex-shrink: 0;
+    }
+
+    .event-chip.active {
+      color: #f5edff;
+      border-color: #c084fc;
+      background: rgba(168,85,247,.22);
+      box-shadow: 0 0 40px rgba(168,85,247,.35), 0 0 80px rgba(168,85,247,.15);
+      transform: scale(1.05);
+    }
+
+    .event-chip.active i {
+      background: #c084fc;
+      box-shadow: 0 0 16px #c084fc;
+    }
+
+    .description {
+      max-width: 720px;
+      margin: 28px auto 0;
+      color: #796c84;
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(.96); opacity: .7; }
+      70% { transform: scale(1.12); opacity: 0; }
+      100% { transform: scale(1.12); opacity: 0; }
+    }
+
+    @keyframes blink { 50% { opacity: .35; } }
+
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to { transform: translate(50px,30px) scale(1.12); }
+    }
+
+    @media (max-width: 760px) {
+      .app { padding-top: 22px; }
+      .stage {
+        min-height: auto;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+          "control control"
+          "left right";
+        gap: 25px;
+        padding: 50px 0 35px;
+      }
+      .main-control { grid-area: control; }
+      .side-stat:first-child { grid-area: left; }
+      .side-stat:last-child { grid-area: right; }
+      .main-button { width: min(290px, 68vw); }
+      .logo { letter-spacing: .16em; }
+
+      .event-chip {
+        font-size: 14px;
+        padding: 10px 18px;
+        min-width: 70px;
+      }
+    }
+
+    .main-control .events-wrapper {
+      width: 100%;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="background">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="grid"></div>
+  </div>
+
+  <main class="app">
+    <header class="header">
+      <div class="logo">ИЗЮМИНКА</div>
+      <div id="status" class="status"><span></span> ГОТОВА</div>
+    </header>
+
+    <section class="stage">
+      <div class="side-stat">
+        <div class="stat-label">РАБОТАЕТ</div>
+        <div id="totalTimer" class="timer">00:00:00</div>
+      </div>
+
+      <div class="main-control">
+        <div id="eventBadge" class="event-badge">ОЖИДАНИЕ</div>
+        <button id="mainButton" class="main-button" aria-label="Запустить Изюминку">
+          <span id="buttonIcon" class="play-icon"></span>
+          <span class="pulse-ring"></span>
+        </button>
+        <div id="eventText" class="event-text">НАЖМИТЕ, ЧТОБЫ ЗАПУСТИТЬ</div>
+
+        <!-- Ивенты прямо под кнопкой -->
+        <div class="events-wrapper">
+          <div class="events">
+            <div class="event-chip" data-event="nazad"><i></i>NAZAD</div>
+            <div class="event-chip" data-event="stop"><i></i>STOP</div>
+            <div class="event-chip" data-event="gaz"><i></i>GAZ</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side-stat">
+        <div class="stat-label">СЛЕДУЮЩИЙ ИВЕНТ</div>
+        <div id="nextTimer" class="timer">--:--</div>
+      </div>
+    </section>
+
+    <!-- Описание внизу -->
+    <section class="info">
+      <p class="description">
+        Изюминка была придумана Sinekurami, ssszxc и yaromochka для веселься в forza, приятного пользования!!!
+      </p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+  "use strict";
+
+  const CONFIG = {
+    eventMinMs: 2000,
+    eventMaxMs: 10000,
+    gapMinMs: 2000,
+    gapMaxMs: 15000
+  };
+
+  const eventFiles = {
+    nazad: "nazad.mp3",
+    stop: "stop.mp3",
+    gaz: "gaz.mp3"
+  };
+
+  const finishFile = "alga.mp3";
+
+  const mainButton = document.getElementById("mainButton");
+  const buttonIcon = document.getElementById("buttonIcon");
+  const totalTimer = document.getElementById("totalTimer");
+  const nextTimer = document.getElementById("nextTimer");
+  const eventBadge = document.getElementById("eventBadge");
+  const eventText = document.getElementById("eventText");
+  const status = document.getElementById("status");
+  const chips = [...document.querySelectorAll(".event-chip")];
+
+  let running = false;
+  let startedAt = 0;
+  let totalBeforePause = 0;
+  let lastAlgaAt = null;
+  let timeoutId = null;
+  let timerId = null;
+  let currentAudio = null;
+  let currentEvent = null;
+
+  const randomInt = (min, max) =>
+    Math.floor(Math.random() * (max - min + 1)) + min;
+
+  const formatTime = (ms, withHours = true) => {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const seconds = totalSeconds % 60;
+    const minutes = Math.floor(totalSeconds / 60) % 60;
+    const hours = Math.floor(totalSeconds / 3600);
+
+    const s = String(seconds).padStart(2, "0");
+    const m = String(minutes).padStart(2, "0");
+
+    return withHours
+      ? `${String(hours).padStart(2, "0")}:${m}:${s}`
+      : `${m}:${s}`;
+  };
+
+  const stopAudio = () => {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      currentAudio = null;
+    }
+  };
+
+  const clearSchedule = () => {
+    clearTimeout(timeoutId);
+    timeoutId = null;
+  };
+
+  const setChip = (name) => {
+    chips.forEach(chip =>
+      chip.classList.toggle("active", chip.dataset.event === name)
+    );
+  };
+
+  const resetVisuals = () => {
+    setChip(null);
+    currentEvent = null;
+    eventBadge.textContent = "ОЖИДАНИЕ";
+    eventText.textContent = running
+      ? "ОЖИДАНИЕ СЛЕДУЮЩЕГО ИВЕНТА"
+      : "НАЖМИТЕ, ЧТОБЫ ЗАПУСТИТЬ";
+  };
+
+  const playFile = (filename) => {
+    stopAudio();
+
+    const audio = new Audio(filename);
+    currentAudio = audio;
+    audio.preload = "auto";
+
+    const cleanup = () => {
+      if (currentAudio === audio) currentAudio = null;
+    };
+
+    audio.addEventListener("ended", cleanup, { once: true });
+    audio.addEventListener("error", cleanup, { once: true });
+
+    audio.play().catch(() => {
+      cleanup();
+    });
+
+    return audio;
+  };
+
+  const scheduleNextEvent = () => {
+    if (!running) return;
+
+    const delay = randomInt(CONFIG.gapMinMs, CONFIG.gapMaxMs);
+
+    timeoutId = setTimeout(() => {
+      timeoutId = null;
+      startRandomEvent();
+    }, delay);
+  };
+
+  const startRandomEvent = () => {
+    if (!running) return;
+
+    const names = Object.keys(eventFiles);
+    const name = names[randomInt(0, names.length - 1)];
+    const duration = randomInt(CONFIG.eventMinMs, CONFIG.eventMaxMs);
+
+    currentEvent = name;
+    setChip(name);
+    eventBadge.textContent = name.toUpperCase();
+    eventText.textContent = name.toUpperCase();
+
+    playFile(eventFiles[name]);
+
+    timeoutId = setTimeout(() => {
+      if (!running || currentEvent !== name) return;
+
+      setChip(null);
+      eventBadge.textContent = "ЗАВЕРШЕНИЕ";
+      eventText.textContent = "ALGA";
+
+      lastAlgaAt = Date.now();
+      playFile(finishFile);
+
+      scheduleNextEvent();
+    }, duration);
+  };
+
+  const elapsed = () => {
+    if (!running) return totalBeforePause;
+    return totalBeforePause + (Date.now() - startedAt);
+  };
+
+  const updateTimers = () => {
+    totalTimer.textContent = formatTime(elapsed(), true);
+
+    if (lastAlgaAt !== null && running) {
+      nextTimer.textContent = formatTime(Date.now() - lastAlgaAt, false);
+    } else if (lastAlgaAt !== null) {
+      nextTimer.textContent = formatTime(Date.now() - lastAlgaAt, false);
+    } else {
+      nextTimer.textContent = "00:00";
+    }
+  };
+
+  const start = () => {
+    if (running) return;
+
+    running = true;
+    startedAt = Date.now();
+
+    status.classList.add("running");
+    status.innerHTML = "<span></span> РАБОТАЕТ";
+    mainButton.classList.add("active");
+    mainButton.setAttribute("aria-label", "Поставить на паузу");
+    buttonIcon.className = "pause-icon";
+
+    eventBadge.textContent = "ЗАПУСК";
+    eventText.textContent = "СЛЕДУЮЩИЙ ИВЕНТ БУДЕТ СЛУЧАЙНЫМ";
+
+    lastAlgaAt = null;
+
+    scheduleNextEvent();
+    clearInterval(timerId);
+    timerId = setInterval(updateTimers, 250);
+    updateTimers();
+  };
+
+  const pause = () => {
+    if (!running) return;
+
+    totalBeforePause += Date.now() - startedAt;
+    running = false;
+
+    clearSchedule();
+    stopAudio();
+    resetVisuals();
+
+    status.classList.remove("running");
+    status.innerHTML = "<span></span> ПАУЗА";
+    mainButton.classList.remove("active");
+    mainButton.setAttribute("aria-label", "Продолжить");
+    buttonIcon.className = "play-icon";
+
+    updateTimers();
+  };
+
+  mainButton.addEventListener("click", () => {
+    if (running) pause();
+    else start();
+  });
+
+  const rightLabel = document.querySelectorAll(".stat-label")[1];
+  if (rightLabel) rightLabel.textContent = "ПОСЛЕ ALGA";
+
+  updateTimers();
+})();
+  </script>
+</body>
+</html>
