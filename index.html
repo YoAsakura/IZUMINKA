@@ -126,8 +126,9 @@
       min-height: 560px;
       display: grid;
       grid-template-columns: 1fr minmax(300px, 440px) 1fr;
-      align-items: center;
+      align-items: start;
       gap: 40px;
+      padding-top: 30px;
     }
 
     .side-stat {
@@ -254,6 +255,65 @@
       font-weight: 500;
     }
 
+    /* ===== СТАТИСТИКА ===== */
+    .stats-panel {
+      background: rgba(20,10,32,.45);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-top: 10px;
+      backdrop-filter: blur(4px);
+    }
+
+    .stats-title {
+      color: #8d809c;
+      font-size: 9px;
+      letter-spacing: .2em;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 12px;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 8px;
+      background: rgba(168,85,247,.08);
+      border: 1px solid rgba(168,85,247,.08);
+      transition: .3s ease;
+    }
+
+    .stat-item.active-stat {
+      border-color: rgba(168,85,247,.3);
+      background: rgba(168,85,247,.15);
+    }
+
+    .stat-item .label {
+      font-size: 8px;
+      color: #8d809c;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .stat-item .count {
+      font-size: 22px;
+      font-weight: 700;
+      color: #d8b4fe;
+      text-shadow: 0 0 20px rgba(168,85,247,.3);
+    }
+
+    .stat-item .count.bonus-count {
+      color: #fbbf24;
+      text-shadow: 0 0 20px rgba(251,191,36,.3);
+    }
+
     /* ===== ИВЕНТЫ ПРЯМО ПОД КНОПКОЙ ===== */
     .info {
       padding-top: 30px;
@@ -317,6 +377,19 @@
       box-shadow: 0 0 16px #c084fc;
     }
 
+    .event-chip.bonus-chip {
+      border-color: rgba(251,191,36,.3);
+    }
+    .event-chip.bonus-chip.active {
+      border-color: #fbbf24;
+      background: rgba(251,191,36,.2);
+      box-shadow: 0 0 40px rgba(251,191,36,.3), 0 0 80px rgba(251,191,36,.1);
+    }
+    .event-chip.bonus-chip.active i {
+      background: #fbbf24;
+      box-shadow: 0 0 16px #fbbf24;
+    }
+
     .description {
       max-width: 720px;
       margin: 28px auto 0;
@@ -358,7 +431,7 @@
           "control control"
           "left right";
         gap: 25px;
-        padding: 50px 0 35px;
+        padding: 30px 0 20px;
       }
       .main-control { grid-area: control; }
       .side-stat:first-child { grid-area: left; }
@@ -370,6 +443,10 @@
         font-size: 14px;
         padding: 10px 18px;
         min-width: 70px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
 
@@ -415,12 +492,36 @@
             <div class="event-chip" data-event="nazad"><i></i>NAZAD</div>
             <div class="event-chip" data-event="stop"><i></i>STOP</div>
             <div class="event-chip" data-event="gaz"><i></i>GAZ</div>
+            <div class="event-chip bonus-chip" data-event="bonus"><i></i>BONUS</div>
+          </div>
+        </div>
+
+        <!-- СТАТИСТИКА -->
+        <div class="stats-panel">
+          <div class="stats-title">СТАТИСТИКА ИВЕНТОВ</div>
+          <div class="stats-grid" id="statsGrid">
+            <div class="stat-item" data-stat="nazad">
+              <span class="label">NAZAD</span>
+              <span class="count" id="count-nazad">0</span>
+            </div>
+            <div class="stat-item" data-stat="stop">
+              <span class="label">STOP</span>
+              <span class="count" id="count-stop">0</span>
+            </div>
+            <div class="stat-item" data-stat="gaz">
+              <span class="label">GAZ</span>
+              <span class="count" id="count-gaz">0</span>
+            </div>
+            <div class="stat-item" data-stat="bonus">
+              <span class="label">BONUS</span>
+              <span class="count bonus-count" id="count-bonus">0</span>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="side-stat">
-        <div class="stat-label">СЛЕДУЮЩИЙ ИВЕНТ</div>
+        <div class="stat-label">ПОСЛЕ ALGA</div>
         <div id="nextTimer" class="timer">--:--</div>
       </div>
     </section>
@@ -439,16 +540,16 @@
 
     const CONFIG = {
     eventMinMs: 2000,
-    eventMaxMs: 10000,
-    gapMinMs: 2000,
-    gapMaxMs: 180000
+    eventMaxMs: 14000,
+    gapMinMs: 4000,
+    gapMaxMs: 90000
   };
 
   const eventFiles = {
     nazad: "nazad.mp3",
     stop: "stop.mp3",
     gaz: "gaz.mp3",
-    bonus: "bonus.mp3"  // Добавляем бонусный звук
+    bonus: "bonus.mp3"
   };
 
   const finishFile = "alga.mp3";
@@ -462,6 +563,21 @@
   const status = document.getElementById("status");
   const chips = [...document.querySelectorAll(".event-chip")];
 
+  // Статистика
+  const stats = {
+    nazad: 0,
+    stop: 0,
+    gaz: 0,
+    bonus: 0
+  };
+
+  const totalEvents = {
+    nazad: 0,
+    stop: 0,
+    gaz: 0,
+    bonus: 0
+  };
+
   let running = false;
   let startedAt = 0;
   let totalBeforePause = 0;
@@ -470,6 +586,9 @@
   let timerId = null;
   let currentAudio = null;
   let currentEvent = null;
+
+  // Флаг, чтобы не дублировать статистику
+  let isEventCompleted = false;
 
   const randomInt = (min, max) =>
     Math.floor(Math.random() * (max - min + 1)) + min;
@@ -502,9 +621,9 @@
   };
 
   const setChip = (name) => {
-    chips.forEach(chip =>
-      chip.classList.toggle("active", chip.dataset.event === name)
-    );
+    chips.forEach(chip => {
+      chip.classList.toggle("active", chip.dataset.event === name);
+    });
   };
 
   const resetVisuals = () => {
@@ -514,6 +633,23 @@
     eventText.textContent = running
       ? "ОЖИДАНИЕ СЛЕДУЮЩЕГО ИВЕНТА"
       : "НАЖМИТЕ, ЧТОБЫ ЗАПУСТИТЬ";
+    isEventCompleted = false;
+  };
+
+  const updateStatsDisplay = () => {
+    document.getElementById("count-nazad").textContent = stats.nazad;
+    document.getElementById("count-stop").textContent = stats.stop;
+    document.getElementById("count-gaz").textContent = stats.gaz;
+    document.getElementById("count-bonus").textContent = stats.bonus;
+
+    // Подсветка активной статистики (последний ивент)
+    document.querySelectorAll(".stat-item").forEach(el => {
+      el.classList.remove("active-stat");
+    });
+    if (currentEvent && stats[currentEvent] > 0) {
+      const activeEl = document.querySelector(`.stat-item[data-stat="${currentEvent}"]`);
+      if (activeEl) activeEl.classList.add("active-stat");
+    }
   };
 
   const playFile = (filename) => {
@@ -551,8 +687,7 @@
   const startRandomEvent = () => {
     if (!running) return;
 
-    // Проверяем шанс 1 к 100 на бонусное событие
-    const isBonus = Math.random() < 0.001; // 1%
+    const isBonus = Math.random() < 0.01; // 1%
 
     let name;
     if (isBonus) {
@@ -565,6 +700,7 @@
     const duration = randomInt(CONFIG.eventMinMs, CONFIG.eventMaxMs);
 
     currentEvent = name;
+    isEventCompleted = false;
     setChip(name);
     eventBadge.textContent = name.toUpperCase();
     eventText.textContent = name.toUpperCase();
@@ -578,8 +714,23 @@
       eventBadge.textContent = "ЗАВЕРШЕНИЕ";
       eventText.textContent = "ALGA";
 
+      // ✅ Увеличиваем статистику ТОЛЬКО после alga
+      stats[name] = (stats[name] || 0) + 1;
+      totalEvents[name] = (totalEvents[name] || 0) + 1;
+      isEventCompleted = true;
+      updateStatsDisplay();
+
       lastAlgaAt = Date.now();
       playFile(finishFile);
+
+      // Сбрасываем подсветку через небольшую задержку, чтобы пользователь видел, что ивент засчитан
+      setTimeout(() => {
+        if (currentEvent === name) {
+          document.querySelectorAll(".stat-item").forEach(el => {
+            el.classList.remove("active-stat");
+          });
+        }
+      }, 1500);
 
       scheduleNextEvent();
     }, duration);
@@ -649,9 +800,8 @@
     else start();
   });
 
-  const rightLabel = document.querySelectorAll(".stat-label")[1];
-  if (rightLabel) rightLabel.textContent = "ПОСЛЕ ALGA";
-
+  // Инициализация
+  updateStatsDisplay();
   updateTimers();
 })();
   </script>
